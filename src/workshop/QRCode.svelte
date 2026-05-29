@@ -1,13 +1,14 @@
-import { useMemo } from "react";
-import qrcode from "qrcode-generator";
+<script lang="ts">
+  import qrcode from "qrcode-generator";
 
-interface QRCodeProps {
-  url: string;
-  size?: number;
-}
+  interface Props {
+    url: string;
+    size?: number;
+  }
 
-export function QRCode({ url, size = 200 }: QRCodeProps) {
-  const svgMarkup = useMemo(() => {
+  let { url, size = 200 }: Props = $props();
+
+  let svgMarkup = $derived.by(() => {
     const qr = qrcode(0, "M");
     qr.addData(url);
     qr.make();
@@ -27,12 +28,9 @@ export function QRCode({ url, size = 200 }: QRCodeProps) {
     }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><path d="${paths}" fill="#18181b"/></svg>`;
-  }, [url, size]);
+  });
+</script>
 
-  return (
-    <div
-      className="inline-block rounded-xl bg-white p-3 shadow-sm border border-neutral-200"
-      dangerouslySetInnerHTML={{ __html: svgMarkup }}
-    />
-  );
-}
+<div class="inline-block rounded-xl bg-white p-3 shadow-sm border border-neutral-200">
+  {@html svgMarkup}
+</div>
