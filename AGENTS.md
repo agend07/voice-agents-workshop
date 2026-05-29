@@ -2,31 +2,31 @@
 
 ## What this is
 
-Workshop demo: a Cloudflare Workers voice agent using `@cloudflare/voice` (experimental). React SPA client + Workers backend with a Durable Object voice agent. Not a framework app - plain Vite React + Cloudflare Vite plugin.
+Workshop demo: a Cloudflare Workers voice agent using `@cloudflare/voice` (experimental). Svelte 5 SPA client + Workers backend with a Durable Object voice agent. Not a framework app - plain Vite Svelte + Cloudflare Vite plugin.
 
 ## Architecture (two separate worlds)
 
 - **`worker/index.ts`** - Workers entry point. Exports `VoiceAgent` (Durable Object class) and a default fetch handler using `routeAgentRequest()`. This is the only server file.
-- **`src/`** - React SPA. Client connects to the agent via `useVoiceAgent({ agent: "VoiceAgent" })` which opens a WebSocket to `/agents/voice-agent/default`.
+- **`src/`** - Svelte 5 SPA. Client connects to the agent via `VoiceClient` from `@cloudflare/voice/client` which opens a WebSocket to `/agents/voice-agent/default`.
 - **`index.html`** - Uses Tailwind CSS v4 via CDN (`@tailwindcss/browser@4`). No build-time Tailwind, no CSS files.
 
-The `useVoiceAgent` hook auto-converts the agent name from PascalCase to kebab-case for the URL path (`VoiceAgent` → `voice-agent`). The agent name in the hook **must match** the exported class name in `worker/index.ts` and the `class_name` in `wrangler.jsonc`.
+The `VoiceClient` auto-converts the agent name from PascalCase to kebab-case for the URL path (`VoiceAgent` → `voice-agent`). The agent name passed to `VoiceClient` **must match** the exported class name in `worker/index.ts` and the `class_name` in `wrangler.jsonc`.
 
 ## Commands
 
 ```sh
 pnpm dev          # Vite dev server (runs Workers locally via miniflare)
-pnpm build        # tsc -b && vite build
+pnpm build        # vite build
+pnpm check        # svelte-check (type checking)
 pnpm deploy       # build + wrangler deploy
 pnpm cf-typegen   # regenerate worker-configuration.d.ts from wrangler.jsonc
-pnpm lint         # eslint
 ```
 
 No tests, no CI, no pre-commit hooks.
 
 ## TypeScript: three tsconfig projects
 
-- `tsconfig.app.json` - `src/` (React, DOM types)
+- `tsconfig.app.json` - `src/` (Svelte, DOM types)
 - `tsconfig.worker.json` - `worker/` (extends node config, includes `worker-configuration.d.ts` for CF runtime types)
 - `tsconfig.node.json` - `vite.config.ts`
 
@@ -52,8 +52,8 @@ The `account_id` is set in `wrangler.jsonc` to avoid the multi-account prompt in
 - Server: `withVoice(Agent)` mixin adds the voice pipeline. Implement `onTurn(transcript, context)` - return a string or stream.
 - `onCallStart()` can call `this.speak(connection, text)` for a greeting.
 - `context.messages` gives SQLite-backed conversation history. `context.signal` aborts on user interrupt.
-- Client: `useVoiceAgent` from `@cloudflare/voice/react`. States: `idle` → `listening` → `thinking` → `speaking`.
-- For STT-only (no TTS response), use `withVoiceInput` / `useVoiceInput` instead.
+- Client: `VoiceClient` from `@cloudflare/voice/client`. States: `idle` → `listening` → `thinking` → `speaking`. Event-driven via `addEventListener`.
+- For STT-only (no TTS response), use `withVoiceInput` / equivalent client setup.
 
 ## Gotchas
 
